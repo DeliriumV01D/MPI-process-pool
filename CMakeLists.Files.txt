@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 3.4)
+
+#project(MPIProcessPool)
+
+find_package(MPI REQUIRED)
+
+include_directories(${MPI_CXX_INCLUDE_PATH})
+
+set(SOURCES ${SOURCES}
+	src/tmpi_process_pool.cpp
+	src/main.cpp	
+)
+
+set(HEADERS ${HEADERS}
+	src/tmpi_process_pool.h
+	src/tthread_safe_queue.h
+)
+
+set(LIBS ${LIBS}
+	${MPI_CXX_LIBRARIES}
+)
+
+if(MSVC_IDE)
+	source_group("src" FILES ${Files_src})
+
+	source_group("" FILES CMakeLists.Files.txt)
+endif()
+
