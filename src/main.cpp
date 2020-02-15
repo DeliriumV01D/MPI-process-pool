@@ -72,23 +72,32 @@ int main(int argc, char *argv[])
 	};
 
 	TMPIProcessPool <TestTask, TestResult> mpi_process_pool(f, 100);
-	for (int i = 0; i < 5; i++)
-		bool b = mpi_process_pool.AddTask(new TestTask(i));
-	mpi_process_pool.Start();
-	for (int i = 5; i < 35; i++)
-		bool b = mpi_process_pool.AddTask(new TestTask(i));
 
-	//It’s not necessary to wait until the end of the work, you can get the results as they received
-	while (!mpi_process_pool.IsFinished())
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-	IMPIResult ** result = new IMPIResult *;
-	while (mpi_process_pool.GetResult(result))
+	if (mpi_process_pool.GetMPIRank() == 0)
 	{
-		std::cout<<"RESULT: "<<((TestResult*)(*result))->GetID()<<std::endl;
-		delete (*result);
+		for (int i = 0; i < 5; i++)
+			bool b = mpi_process_pool.AddTask(new TestTask(i));
 	}
-	delete result;
+	
+	mpi_process_pool.Start();
+	
+	if (mpi_process_pool.GetMPIRank() == 0)
+	{
+		for (int i = 5; i < 35; i++)
+			bool b = mpi_process_pool.AddTask(new TestTask(i));
+
+		//It’s not necessary to wait until the end of the work, you can get the results as they received
+		while (!mpi_process_pool.IsFinished())
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+		IMPIResult ** result = new IMPIResult *;
+		while (mpi_process_pool.GetResult(result))
+		{
+			std::cout<<"RESULT: "<<((TestResult*)(*result))->GetID()<<std::endl;
+			delete (*result);
+		}
+		delete result;
+	}
 	//process #0 will stop when all answers are received, other processes will stop by command
 	//mpi_process_pool.Stop();
 }

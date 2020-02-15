@@ -53,11 +53,14 @@ protected:
 	TThreadSafeQueue <IMPIResult *> ResultQueue;
 public:
 	TMPIProcessPool(
-		std::function<TResult (TTask*)> result_func,
+		std::function<TResult (TTask*)> &&result_func,
 		const size_t max_task_queue_size
 	){
 		ResultFunc = result_func;
+		//Initialization
 		MPI::Init();
+		MPI_Comm_size(MPI_COMM_WORLD, &MPISize);
+		MPI_Comm_rank(MPI_COMM_WORLD, &MPIRank);	
 		TaskQueue.SetMaxLength(max_task_queue_size);
 	}
 				 
@@ -70,9 +73,6 @@ public:
 
 	void Start()
 	{
-		//Initialization
-		MPI_Comm_size(MPI_COMM_WORLD, &MPISize);
-		MPI_Comm_rank(MPI_COMM_WORLD, &MPIRank);	
 		Finished = false;
 		Stopped = false;
 		ProcessStates.resize(MPISize);
@@ -203,6 +203,11 @@ public:
 	bool GetResult(IMPIResult ** result)
 	{
 		return ResultQueue.Pop(*result);
+	}
+
+	int GetMPIRank ()
+	{
+		return MPIRank;
 	}
 };
 

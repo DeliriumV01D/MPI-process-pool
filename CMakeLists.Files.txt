@@ -7,7 +7,6 @@ find_package(MPI REQUIRED)
 include_directories(${MPI_CXX_INCLUDE_PATH})
 
 set(SOURCES ${SOURCES}
-	src/tmpi_process_pool.cpp
 	src/main.cpp	
 )
 
