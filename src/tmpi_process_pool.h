@@ -44,7 +44,8 @@ template <typename TTask, typename TResult>
 class TMPIProcessPool {
 protected:
 	std::atomic<bool>	Stopped,
-										Finished;
+										Finished,
+										Started;
 	int MPIRank,	
 			MPISize;
 	std::vector<TProcessState> ProcessStates;		//No mutex required. There is only one thread working with this array
@@ -75,6 +76,7 @@ public:
 	{
 		Finished = false;
 		Stopped = false;
+		Started = false;
 		ProcessStates.resize(MPISize);
 		for (auto it : ProcessStates)
 			it = IDLE;
@@ -85,7 +87,6 @@ public:
 			auto f = [this]()
 			{
 				//Processing loop
-				std::cout<<MPIRank<<" start..."<<std::endl;
 				size_t buf_size = 0;
 				MPI_Status status;
 				IMPITask * task;
@@ -97,6 +98,8 @@ public:
 						{
 							if (TaskQueue.Pop(task))
 							{
+								if (!Started)
+									Started = true;
 								//Send the task, first send a packet size
 								buf_size = task->GetBufferSize();
 								MPI_Send(&buf_size, sizeof(size_t), MPI_CHAR, i, 0, MPI_COMM_WORLD);
@@ -117,7 +120,7 @@ public:
 							NoBusyProcesses = false;
 							break;
 						}	 
-					if (TaskQueue.Size() == 0 && NoBusyProcesses)
+					if (Started && TaskQueue.Size() == 0 && NoBusyProcesses)
 						Stopped = true;
 
 					if (!Stopped && !NoBusyProcesses)
@@ -141,8 +144,6 @@ public:
 				for (int i = 1; i < MPISize; i++)
 					MPI_Send(&sz, sizeof(size_t), MPI_CHAR, i, 0, MPI_COMM_WORLD);
 				Finished = true;
-				std::cout<<MPIRank<<" done..."<<std::endl;
-				std::cout<<"reults: "<<ResultQueue.Size()<<std::endl;
 			};	 //lambda
 			std::thread th(f);
 			th.detach();

@@ -73,17 +73,11 @@ int main(int argc, char *argv[])
 
 	TMPIProcessPool <TestTask, TestResult> mpi_process_pool(f, 100);
 
-	if (mpi_process_pool.GetMPIRank() == 0)
-	{
-		for (int i = 0; i < 5; i++)
-			bool b = mpi_process_pool.AddTask(new TestTask(i));
-	}
-	
 	mpi_process_pool.Start();
 	
 	if (mpi_process_pool.GetMPIRank() == 0)
 	{
-		for (int i = 5; i < 35; i++)
+		for (int i = 0; i < 35; i++)
 			bool b = mpi_process_pool.AddTask(new TestTask(i));
 
 		//It’s not necessary to wait until the end of the work, you can get the results as they received
